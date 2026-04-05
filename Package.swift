@@ -33,7 +33,11 @@ let package = Package(
             ],
             path: "Sources/ThoughtSnap",
             resources: [
-                .process("../../Resources")
+                // Assets.xcassets lives inside the target source tree
+                .process("Resources/Assets.xcassets"),
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-Xfrontend", "-disable-reflection-metadata"])
             ],
             linkerSettings: [
                 .linkedFramework("Vision"),

@@ -18,6 +18,7 @@ struct ThoughtSnapApp: App {
         Settings {
             SettingsView()
                 .environmentObject(appDelegate.storageService)
+                .environmentObject(appDelegate.linkService)
                 .environmentObject(appDelegate.hotkeyManager)
         }
     }
@@ -31,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     let storageService = StorageService()
     let hotkeyManager  = HotkeyManager()
+    lazy var linkService = LinkGraphService(storageService: storageService)
 
     // MARK: UI
 
@@ -131,6 +133,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         if mainWindowController == nil {
             mainWindowController = MainWindowController(
                 storageService: storageService,
+                linkService:    linkService,
                 capturePanelController: capturePanelController
             )
         }
@@ -153,16 +156,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     private let storageService: StorageService
+    private let linkService:    LinkGraphService
     private var capturePanelController: CapturePanelController?
     private var showCapturePanelObserver: Any?
 
-    init(storageService: StorageService, capturePanelController: CapturePanelController?) {
+    init(storageService: StorageService, linkService: LinkGraphService, capturePanelController: CapturePanelController?) {
         self.storageService = storageService
+        self.linkService    = linkService
         self.capturePanelController = capturePanelController
 
         let windowVM    = MainWindowViewModel()
         let contentView = MainWindowView()
             .environmentObject(storageService)
+            .environmentObject(linkService)
             .environmentObject(windowVM)
 
         let hosting = NSHostingController(rootView: contentView)
@@ -205,6 +211,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
 ///   Column 3 — NoteDetailView (selected note body + backlinks)
 private struct MainWindowView: View {
     @EnvironmentObject var storageService: StorageService
+    @EnvironmentObject var linkService:    LinkGraphService
     @EnvironmentObject var windowVM:       MainWindowViewModel
 
     var body: some View {
@@ -218,8 +225,9 @@ private struct MainWindowView: View {
                 .environmentObject(windowVM)
         } detail: {
             if let noteID = windowVM.selectedNoteID {
-                NoteDetailView(noteID: noteID)
+                NoteDetailContainerView(noteID: noteID)
                     .environmentObject(storageService)
+                    .environmentObject(linkService)
                     .environmentObject(windowVM)
             } else {
                 noSelectionPlaceholder
