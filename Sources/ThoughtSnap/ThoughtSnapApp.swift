@@ -170,17 +170,21 @@ final class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 }
 
-// MARK: - Placeholder views (replaced in later weeks)
+// MARK: - Main window content
 
-/// Placeholder for the main window — replaced by TimelineView in Week 5.
+/// NavigationSplitView shell wiring sidebar + timeline.
+/// Full implementation is in Week 5 (TimelineView, SidebarView, NoteDetailView).
 private struct MainWindowView: View {
     @EnvironmentObject var storageService: StorageService
 
     var body: some View {
-        Text("ThoughtSnap")
-            .font(.largeTitle)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        NavigationSplitView {
+            SidebarView()
+                .environmentObject(storageService)
+        } detail: {
+            TimelineView()
+                .environmentObject(storageService)
+        }
     }
 }
 
