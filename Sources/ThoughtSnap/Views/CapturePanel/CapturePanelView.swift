@@ -120,7 +120,6 @@ struct CapturePanelContentView: View {
     let captureService: ScreenCaptureService
     var onDismiss: () -> Void
 
-    @FocusState private var textFocused: Bool
     @State private var clipboardSub: AnyCancellable?
 
     var body: some View {
@@ -134,7 +133,6 @@ struct CapturePanelContentView: View {
         }
         .onAppear {
             vm.reset()
-            textFocused = true
             clipboardSub = captureService.clipboardImageDetected
                 .receive(on: DispatchQueue.main)
                 .sink { [weak vm] img in vm?.captures.append(AttachedCapture(image: img)) }
@@ -280,24 +278,26 @@ struct CapturePanelContentView: View {
     // MARK: Text area
 
     private var textArea: some View {
-        TextEditor(text: $vm.bodyText)
-            .font(.system(size: 14))
-            .scrollContentBackground(.hidden)
-            .background(.clear)
-            .focused($textFocused)
+        ZStack(alignment: .topLeading) {
+            MarkdownEditor(
+                text: $vm.bodyText,
+                allNotes: storageService.fetchAllNotes(limit: 200, offset: 0),
+                allTags:  storageService.fetchAllTags()
+            )
             .frame(minHeight: vm.captures.isEmpty ? 130 : 70, maxHeight: 180)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .overlay(alignment: .topLeading) {
-                if vm.bodyText.isEmpty {
-                    Text("Type a thought… #tag  [[link]]")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
-                        .allowsHitTesting(false)
-                }
+
+            // Placeholder shown until user types
+            if vm.bodyText.isEmpty {
+                Text("Type a thought… #tag  [[link]]")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 16)
+                    .allowsHitTesting(false)
             }
+        }
     }
 
     // MARK: Footer
@@ -428,7 +428,6 @@ struct CapturePanelContentView: View {
 
     private func dismiss() {
         vm.reset()
-        textFocused = false
         onDismiss()
     }
 }

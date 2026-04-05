@@ -549,6 +549,15 @@ final class StorageService: ObservableObject {
 
     // MARK: - Tags
 
+    /// Returns the set of note IDs that carry a specific tag.
+    func fetchNoteIDs(forTag tag: String) -> Set<UUID> {
+        guard let db = readDB else { return [] }
+        do {
+            let rows = try db.prepare(tagsTable.filter(colTag == tag).select(colNoteID))
+            return Set(rows.compactMap { UUID(uuidString: $0[colNoteID]) })
+        } catch { return [] }
+    }
+
     func fetchAllTags() -> [String] {
         guard let db = readDB else { return [] }
         do {
