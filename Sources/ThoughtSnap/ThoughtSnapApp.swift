@@ -129,7 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     private func openMainWindow() {
         if mainWindowController == nil {
-            mainWindowController = MainWindowController(storageService: storageService)
+            mainWindowController = MainWindowController(
+                storageService: storageService,
+                capturePanelController: capturePanelController
+            )
         }
         // Switch to regular policy so the app appears in the Dock while the main window is open.
         NSApp.setActivationPolicy(.regular)
@@ -146,45 +149,100 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 // MARK: - MainWindowController
 
 /// Thin wrapper that reverts to .accessory policy when the main window closes.
+/// Subscribes to .showCapturePanel so the ⌘N button in TimelineView works.
 final class MainWindowController: NSWindowController, NSWindowDelegate {
 
-    init(storageService: StorageService) {
+    private let storageService: StorageService
+    private var capturePanelController: CapturePanelController?
+    private var showCapturePanelObserver: Any?
+
+    init(storageService: StorageService, capturePanelController: CapturePanelController?) {
+        self.storageService = storageService
+        self.capturePanelController = capturePanelController
+
+        let windowVM    = MainWindowViewModel()
         let contentView = MainWindowView()
             .environmentObject(storageService)
+            .environmentObject(windowVM)
+
         let hosting = NSHostingController(rootView: contentView)
-        let window = NSWindow(contentViewController: hosting)
-        window.title = "ThoughtSnap"
-        window.setContentSize(NSSize(width: 900, height: 620))
+        let window  = NSWindow(contentViewController: hosting)
+        window.title    = "ThoughtSnap"
+        window.setContentSize(NSSize(width: 1020, height: 660))
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        window.minSize = NSSize(width: 700, height: 500)
+        window.minSize   = NSSize(width: 760, height: 520)
         window.center()
         super.init(window: window)
         window.delegate = self
+
+        showCapturePanelObserver = NotificationCenter.default.addObserver(
+            forName: .showCapturePanel,
+            object:  nil,
+            queue:   .main
+        ) { [weak self] _ in
+            self?.capturePanelController?.show()
+        }
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
 
+    deinit {
+        if let obs = showCapturePanelObserver {
+            NotificationCenter.default.removeObserver(obs)
+        }
+    }
+
     func windowWillClose(_ notification: Notification) {
-        // Revert to accessory (no Dock icon) when the user closes the main window.
         NSApp.setActivationPolicy(.accessory)
     }
 }
 
 // MARK: - Main window content
 
-/// NavigationSplitView shell wiring sidebar + timeline.
-/// Full implementation is in Week 5 (TimelineView, SidebarView, NoteDetailView).
+/// Three-column NavigationSplitView:
+///   Column 1 — SidebarView   (spaces, tags, filters, search)
+///   Column 2 — TimelineView  (date-grouped note list / search results)
+///   Column 3 — NoteDetailView (selected note body + backlinks)
 private struct MainWindowView: View {
     @EnvironmentObject var storageService: StorageService
+    @EnvironmentObject var windowVM:       MainWindowViewModel
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             SidebarView()
                 .environmentObject(storageService)
-        } detail: {
+                .environmentObject(windowVM)
+        } content: {
             TimelineView()
                 .environmentObject(storageService)
+                .environmentObject(windowVM)
+        } detail: {
+            if let noteID = windowVM.selectedNoteID {
+                NoteDetailView(noteID: noteID)
+                    .environmentObject(storageService)
+                    .environmentObject(windowVM)
+            } else {
+                noSelectionPlaceholder
+            }
         }
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    private var noSelectionPlaceholder: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "brain.head.profile")
+                .font(.system(size: 40))
+                .foregroundStyle(.tertiary)
+            Text("Select a note to read it")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+            Text("Press ⌘⇧Space to capture a new thought from anywhere.")
+                .font(.system(size: 12))
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 240)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

@@ -360,6 +360,60 @@ final class StorageService: ObservableObject {
         } catch { return [] }
     }
 
+    func fetchStarredNotes(limit: Int = 50, offset: Int = 0) -> [Note] {
+        guard let db = readDB else { return [] }
+        do {
+            let rows = try db.prepare(
+                notesTable
+                    .filter(colIsStarred == true)
+                    .order(colUpdatedAt.desc)
+                    .limit(limit, offset: offset)
+            )
+            return rows.compactMap { noteFromRow($0, db: db) }
+        } catch { return [] }
+    }
+
+    func fetchNotes(inSpace spaceID: UUID, limit: Int = 50, offset: Int = 0) -> [Note] {
+        guard let db = readDB else { return [] }
+        do {
+            // Join notes with note_spaces to filter by space
+            let query = """
+                SELECT n.id FROM notes n
+                JOIN note_spaces ns ON n.id = ns.note_id
+                WHERE ns.space_id = ?
+                ORDER BY n.updated_at DESC
+                LIMIT ? OFFSET ?
+            """
+            var ids: [UUID] = []
+            for row in try db.prepare(query, spaceID.uuidString, limit, offset) {
+                if let idStr = row[0] as? String, let id = UUID(uuidString: idStr) {
+                    ids.append(id)
+                }
+            }
+            return ids.compactMap { fetchNote(id: $0) }
+        } catch { return [] }
+    }
+
+    func fetchNotes(withTag tag: String, limit: Int = 50, offset: Int = 0) -> [Note] {
+        guard let db = readDB else { return [] }
+        do {
+            let query = """
+                SELECT n.id FROM notes n
+                JOIN tags t ON n.id = t.note_id
+                WHERE t.tag = ?
+                ORDER BY n.updated_at DESC
+                LIMIT ? OFFSET ?
+            """
+            var ids: [UUID] = []
+            for row in try db.prepare(query, tag, limit, offset) {
+                if let idStr = row[0] as? String, let id = UUID(uuidString: idStr) {
+                    ids.append(id)
+                }
+            }
+            return ids.compactMap { fetchNote(id: $0) }
+        } catch { return [] }
+    }
+
     func deleteNote(id: UUID) -> Result<Void, StorageError> {
         writeQueue.sync {
             guard let db = writeDB else { return .failure(.databaseNotOpen) }
