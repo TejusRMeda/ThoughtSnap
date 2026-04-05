@@ -598,6 +598,30 @@ final class StorageService: ObservableObject {
         }
     }
 
+    // MARK: - FTS annotation labels update
+
+    /// Called after annotations are persisted to update the FTS index with text labels.
+    /// Text annotation labels become full-text-searchable, so a search for a word
+    /// drawn on a screenshot will find the containing note.
+    func updateFTSAnnotationLabels(noteID: UUID, labels: String) {
+        writeQueue.async { [weak self] in
+            guard let self, let db = self.writeDB else { return }
+            let id = noteID.uuidString
+            let escaped = labels.replacingOccurrences(of: "'", with: "''")
+            // Contentless FTS5: delete existing row, insert updated row
+            try? db.execute("""
+                INSERT INTO notes_fts(notes_fts, note_id, body, ocr_text, annotation_labels, tags_blob)
+                SELECT 'delete', note_id, body, ocr_text, annotation_labels, tags_blob
+                FROM notes_fts WHERE note_id = '\(id)'
+            """)
+            try? db.execute("""
+                INSERT INTO notes_fts(note_id, body, ocr_text, annotation_labels, tags_blob)
+                SELECT note_id, body, ocr_text, '\(escaped)', tags_blob
+                FROM notes_fts WHERE note_id = '\(id)'
+            """)
+        }
+    }
+
     // MARK: - File system helpers
 
     func attachmentDirectory(for date: Date = Date()) -> URL {

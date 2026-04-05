@@ -81,16 +81,5 @@ extension Annotation {
     }
 }
 
-// MARK: - NSColor hex initialiser
-
-private extension NSColor {
-    convenience init?(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        guard hex.count == 6, let value = UInt64(hex, radix: 16) else { return nil }
-        let r = CGFloat((value & 0xFF0000) >> 16) / 255
-        let g = CGFloat((value & 0x00FF00) >> 8)  / 255
-        let b = CGFloat(value & 0x0000FF)          / 255
-        self.init(red: r, green: g, blue: b, alpha: 1)
-    }
-}
+// NSColor(hex:) is defined in AnnotationCanvasView.swift as a module-level extension.
 #endif
