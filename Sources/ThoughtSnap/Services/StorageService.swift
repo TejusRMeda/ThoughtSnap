@@ -32,8 +32,12 @@ final class StorageService: ObservableObject {
         return base.appendingPathComponent("ThoughtSnap", isDirectory: true)
     }
 
+    /// Root directory used by this instance. Defaults to `appSupportDirectory`; can be
+    /// overridden via `init(directory:)` for testing.
+    let directory: URL
+
     private var dbURL: URL {
-        Self.appSupportDirectory.appendingPathComponent("thoughtsnap.sqlite")
+        directory.appendingPathComponent("thoughtsnap.sqlite")
     }
 
     // MARK: Connections
@@ -95,6 +99,17 @@ final class StorageService: ObservableObject {
     // MARK: - Initialisation
 
     init() {
+        self.directory = Self.appSupportDirectory
+        do {
+            try setup()
+        } catch {
+            print("[StorageService] Setup failed: \(error)")
+        }
+    }
+
+    /// Test-only initializer that stores the database at a custom directory.
+    init(directory: URL) {
+        self.directory = directory
         do {
             try setup()
         } catch {
@@ -104,13 +119,13 @@ final class StorageService: ObservableObject {
 
     private func setup() throws {
         // Ensure directory exists
-        try FileManager.default.createDirectory(at: Self.appSupportDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(
-            at: Self.appSupportDirectory.appendingPathComponent("attachments"),
+            at: directory.appendingPathComponent("attachments"),
             withIntermediateDirectories: true
         )
         try FileManager.default.createDirectory(
-            at: Self.appSupportDirectory.appendingPathComponent("backups"),
+            at: directory.appendingPathComponent("backups"),
             withIntermediateDirectories: true
         )
 
