@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Menubar-only app — no Dock icon until main window is explicitly shown -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.thoughtsnap.app</string>
+
+    <key>CFBundleName</key>
+    <string>ThoughtSnap</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>ThoughtSnap</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleExecutable</key>
+    <string>ThoughtSnap</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- Required for CGWindowListCreateImage / ScreenCaptureKit -->
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>ThoughtSnap captures screenshots to attach to your notes.</string>
+
+    <!-- Required for global hotkey via CGEvent tap -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>ThoughtSnap uses accessibility features to register a global hotkey from any app.</string>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+
+    <!-- Enable light/dark mode support -->
+    <key>NSRequiresAquaSystemAppearance</key>
+    <false/>
+</dict>
+</plist>

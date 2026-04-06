@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Export method: developer-id for direct distribution outside the Mac App Store.
+        This avoids the App Sandbox restrictions that block global hotkeys and screen capture.
+    -->
+    <key>method</key>
+    <string>developer-id</string>
+
+    <!--
+        Signing configuration.
+        Replace "Developer ID Application: Your Name (TEAMID)" with your actual certificate.
+        For local dev builds without notarization, use "signingCertificate" = "-" (ad-hoc).
+    -->
+    <key>signingStyle</key>
+    <string>automatic</string>
+
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+
+    <!--
+        Strip Swift symbols to reduce binary size (~30% smaller release builds).
+    -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+
+    <!--
+        Notarization: staple the notarization ticket to the app bundle so users
+        on machines without internet can still launch it.
+        Requires Apple Developer account + notarytool credentials.
+    -->
+    <key>notarizeApp</key>
+    <true/>
+</dict>
+</plist>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Prototype: No App Sandbox.
+        Sandboxing blocks global hotkeys (CGEvent tap requires accessibility permission
+        outside sandbox) and complicates screen capture entitlement chains.
+        Plan: Add sandbox entitlements in v1.0 with proper exceptions.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+
+    <!--
+        Hardened Runtime is still applied for notarization compatibility.
+        These are the only exceptions needed:
+    -->
+
+    <!-- Allow JIT — not needed for ThoughtSnap, kept false -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <false/>
+
+    <!-- Allow unsigned executable memory — not needed -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <false/>
+</dict>
+</plist>
